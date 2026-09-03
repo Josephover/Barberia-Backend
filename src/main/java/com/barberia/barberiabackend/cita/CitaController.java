@@ -8,6 +8,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -31,10 +32,27 @@ public class CitaController {
                 request.getFechaHora());
     }
 
+    @PostMapping("/auto")
+    @PreAuthorize("hasRole('CLIENTE')")
+    public Cita crearAuto(
+            @AuthenticationPrincipal Usuario cliente,
+            @RequestBody CrearCitaAutoRequest request) {
+        return citaService.crearCitaAutoAsignada(cliente, request.getServicioId(), request.getFechaHora());
+    }
+
     @GetMapping("/mias")
     @PreAuthorize("hasRole('CLIENTE')")
     public List<Cita> misCitas(@AuthenticationPrincipal Usuario cliente) {
         return citaRepository.findByClienteId(cliente.getId());
+    }
+
+    @GetMapping("/disponible")
+    @PreAuthorize("hasRole('CLIENTE')")
+    public BarberoDisponibleResponse buscarDisponible(
+            @RequestParam Long servicioId,
+            @RequestParam String fechaHora) {
+        Barbero barbero = citaService.buscarBarberoDisponible(servicioId, LocalDateTime.parse(fechaHora));
+        return new BarberoDisponibleResponse(barbero.getId(), barbero.getUsuario().getNombre());
     }
 
     @GetMapping("/agenda")
